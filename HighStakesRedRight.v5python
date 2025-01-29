@@ -1,1 +1,487 @@
-{"mode":"Text","hardwareTarget":"brain","textContent":"#region VEXcode Generated Robot Configuration\nfrom vex import *\nimport urandom\n\n# Brain should be defined by default\nbrain=Brain()\n\n# Robot configuration code\ndigital_out_a = DigitalOut(brain.three_wire_port.a)\nrotation_8 = Rotation(Ports.PORT8, True)\ndistance_15 = Distance(Ports.PORT15)\nrotation_9 = Rotation(Ports.PORT9, False)\ninertial_7 = Inertial(Ports.PORT7)\ndigital_out_d = DigitalOut(brain.three_wire_port.d)\n\n\n# wait for rotation sensor to fully initialize\nwait(30, MSEC)\n\n\n# Make random actually random\ndef initializeRandomSeed():\n    wait(100, MSEC)\n    random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()\n    urandom.seed(int(random))\n      \n# Set random seed \ninitializeRandomSeed()\n\n\ndef play_vexcode_sound(sound_name):\n    # Helper to make playing sounds from the V5 in VEXcode easier and\n    # keeps the code cleaner by making it clear what is happening.\n    print(\"VEXPlaySound:\" + sound_name)\n    wait(5, MSEC)\n\n# add a small delay to make sure we don't print in the middle of the REPL header\nwait(200, MSEC)\n# clear the console to make sure we don't have the REPL in the console\nprint(\"\\033[2J\")\n\n#endregion VEXcode Generated Robot Configuration\n\n#endregion VEXcode Generated Robot Configuration\n# ---------------------------------------------------------------------------- #\n#                                                                              #\n# \tModule:       main.py                                                      #\n# \tAuthor:       Aryan                                                        #\n# \tCreated:      11/21/2024, 12:22:13 PM                                       #\n# \tDescription:  V5 project                                                   #\n#                                                                              #\n# ---------------------------------------------------------------------------- #\n\n# Library imports\nfrom vex import *\n\nbrain = Brain()\n\nlimit_down = Limit(brain.three_wire_port.h)\n\nclamp = DigitalOut(brain.three_wire_port.a)\n\nbelt = Motor(Ports.PORT9, GearSetting.RATIO_18_1, False)\n\nStage1 = Motor(Ports.PORT10, GearSetting.RATIO_18_1, False)\n\nlift = Motor(Ports.PORT7, GearSetting.RATIO_36_1, True)\n\nrotation_belt = rotation_8.position(TURNS)\n\ndoinker = DigitalOut(brain.three_wire_port.d)\n\nring_sensor = distance_15.object_distance(MM)\n\n#stops belt and intake\ndef stopDurAuto():\n    left_motor_1.stop()\n    left_motor_2.stop()\n    left_motor_3.stop()\n    right_motor_1.stop()\n    right_motor_2.stop()\n    right_motor_3.stop()\n\ndef intake_spin():\n    Stage1.set_velocity(100, PERCENT)\n    Stage1.spin(FORWARD)\n    belt.set_velocity(100, PERCENT)\n    belt.spin(FORWARD)\ndef intake_reverse():\n    Stage1.set_velocity(100)\n    Stage1.spin(REVERSE)\n    belt.set_velocity(100)\n    belt.spin(REVERSE)\ndef intake_stop():\n    Stage1.stop()\n    belt.stop()\n\n\n\n# Define motors for the drivetrain\nleft_motor_1 = Motor(Ports.PORT1, GearSetting.RATIO_36_1, False)  # Adjust port and reversal as needed\nleft_motor_2 = Motor(Ports.PORT2, GearSetting.RATIO_36_1, False)\nleft_motor_3 = Motor(Ports.PORT3, GearSetting.RATIO_36_1, True)\n\nright_motor_1 = Motor(Ports.PORT4, GearSetting.RATIO_36_1, True)  # Adjust port and reversal as needed\nright_motor_2 = Motor(Ports.PORT5, GearSetting.RATIO_36_1, False)\nright_motor_3 = Motor(Ports.PORT6, GearSetting.RATIO_36_1, True)\n\n# Define the controller\ncontroller = Controller(ControllerType.PRIMARY)\n\ndef pid_control(target_position, kp, ki, kd):\n    error = 0\n    integral = 0\n    derivative = 0\n    last_error = 0\n    tolerance = 2  # Allowable range for the position to be considered \"close enough\"\n    max_output = 50  # Maximum motor speed (percentage)\n    \n    while True:\n        current_position = rotation_9.position(DEGREES)\n        error = target_position - current_position\n        \n        # Accumulate the integral term if error is small enough\n        if abs(error) < 50:  # Prevent integral windup\n            integral += error\n        else:\n            integral = 0  # Reset integral for large errors\n        \n        derivative = error - last_error\n        output = (kp * error) + (ki * integral) + (kd * derivative)\n        \n        # Clamp output to prevent excessive speed\n        output = max(min(output, max_output), -max_output)\n        \n        # Apply motor velocity and direction\n        if output > 0:\n            lift.set_velocity(output, PERCENT)\n            lift.spin(FORWARD)\n        elif output < 0:\n            lift.set_velocity(abs(output), PERCENT)\n            lift.spin(REVERSE)\n        else:\n            lift.stop()\n        \n        # Stop PID loop when within tolerance\n        if abs(error) <= tolerance:\n            lift.stop()\n            break\n        \n        last_error = error\n        wait(20, MSEC)\n\n\ndef turn_90(direction):\n\n    wait(0.5,SECONDS)\n\n    if direction == 'left':\n        left_motor_1.spin(REVERSE, 80, PERCENT)\n        left_motor_2.spin(REVERSE, 80, PERCENT)\n        left_motor_3.spin(REVERSE, 80, PERCENT)\n  \n  \n        right_motor_1.spin(FORWARD, 50, PERCENT)\n        right_motor_2.spin(FORWARD, 50, PERCENT)\n        right_motor_3.spin(FORWARD, 50, PERCENT)\n\n\n    if direction == 'right':\n        left_motor_1.spin(FORWARD, 50, PERCENT)\n        left_motor_2.spin(FORWARD, 50, PERCENT)\n        left_motor_3.spin(FORWARD, 50, PERCENT)\n  \n  \n        right_motor_1.spin(REVERSE, 80, PERCENT)\n        right_motor_2.spin(REVERSE, 80, PERCENT)\n        right_motor_3.spin(REVERSE, 80, PERCENT)\n\n    wait(0.305, SECONDS)\n\n    stopDurAuto()\n\ndef autonomous():\n   clamp.set(False)\n   brain.screen.clear_screen()\n   brain.screen.print(\"Autonomous Mode\")\n  \n\n   # Drive forward for 2 seconds\n   left_motor_1.spin(FORWARD, 50, PERCENT)\n   left_motor_2.spin(FORWARD, 50, PERCENT)\n   left_motor_3.spin(FORWARD, 50, PERCENT)\n  \n   right_motor_1.spin(FORWARD, 50, PERCENT)\n   right_motor_2.spin(FORWARD, 50, PERCENT)\n   right_motor_3.spin(FORWARD, 50, PERCENT)\n  \n   wait(1, SECONDS)  # Wait for 2 seconds while motors run\n  \n   # Stop all motors\n   left_motor_1.stop()\n   left_motor_2.stop()\n   left_motor_3.stop()\n   right_motor_1.stop()\n   right_motor_2.stop()\n   right_motor_3.stop()\n\n    # Clamp onto the Mobile Goal\n\n   clamp.set(True)\n\n\n   wait(1, SECONDS)\n   Stage1.set_velocity(100, PERCENT)\n   belt.set_velocity(100, PERCENT)\n   Stage1.spin(FORWARD)\n   belt.spin(FORWARD)\n\n\n\n\n   wait(1, SECONDS)\n\n    # Turn negative 40 degrees to align to the stack of goals\n   left_motor_1.spin(REVERSE, 80, PERCENT)\n   left_motor_2.spin(REVERSE, 80, PERCENT)\n   left_motor_3.spin(REVERSE, 80, PERCENT)\n  \n  \n   right_motor_1.spin(FORWARD, 50, PERCENT)\n   right_motor_2.spin(FORWARD, 50, PERCENT)\n   right_motor_3.spin(FORWARD, 50, PERCENT)\n\n\n   wait(0.2, SECONDS)\n\n\n   stopDurAuto()\n  \n    # run into the stack to score the bottom ring\n\n   left_motor_1.spin(REVERSE, 50, PERCENT)\n   left_motor_2.spin(REVERSE, 50, PERCENT)\n   left_motor_3.spin(REVERSE, 50, PERCENT)\n  \n   right_motor_1.spin(REVERSE, 50, PERCENT)\n   right_motor_2.spin(REVERSE, 50, PERCENT)\n   right_motor_3.spin(REVERSE, 50, PERCENT)\n\n\n   wait(0.75, SECONDS)\n\n\n   stopDurAuto()\n\n   \n   turn_90('left')\n\n\n   # Operate the clamp (open or close)\n\n   \n     # Example: Close the clamp\n     # Wait for 1 second\n\n\n   left_motor_1.spin(REVERSE, 25, PERCENT)\n   left_motor_2.spin(REVERSE, 25, PERCENT)\n   left_motor_3.spin(REVERSE, 25, PERCENT)\n  \n   right_motor_1.spin(REVERSE, 25, PERCENT)\n   right_motor_2.spin(REVERSE, 25, PERCENT)\n   right_motor_3.spin(REVERSE, 25, PERCENT)\n  \n   wait(1, SECONDS)  # Wait for 2 seconds while motors run\n  \n   # Stop all motors\n   left_motor_1.stop()\n   left_motor_2.stop()\n   left_motor_3.stop()\n   right_motor_1.stop()\n   right_motor_2.stop()\n   right_motor_3.stop()\n   \n\n   left_motor_1.spin(FORWARD, 50, PERCENT)\n   left_motor_2.spin(FORWARD, 50, PERCENT)\n   left_motor_3.spin(FORWARD, 50, PERCENT)\n  \n   right_motor_1.spin(FORWARD, 50, PERCENT)\n   right_motor_2.spin(FORWARD, 50, PERCENT)\n   right_motor_3.spin(FORWARD, 50, PERCENT)\n  \n   wait(0.4, SECONDS)  # Wait for 2 seconds while motors run\n\n   stopDurAuto()\n\n   left_motor_1.spin(REVERSE, 50, PERCENT)\n   left_motor_2.spin(REVERSE, 50, PERCENT)\n   left_motor_3.spin(REVERSE, 50, PERCENT)\n  \n   right_motor_1.spin(FORWARD, 80, PERCENT)\n   right_motor_2.spin(FORWARD, 80, PERCENT)\n   right_motor_3.spin(FORWARD, 80, PERCENT)\n  \n   wait(0.2, SECONDS)  # Wait for 2 seconds while motors run\n    \n   stopDurAuto()\n\n\n   left_motor_1.spin(REVERSE, 50, PERCENT)\n   left_motor_2.spin(REVERSE, 50, PERCENT)\n   left_motor_3.spin(REVERSE, 50, PERCENT)\n  \n   right_motor_1.spin(REVERSE, 50, PERCENT)\n   right_motor_2.spin(REVERSE, 50, PERCENT)\n   right_motor_3.spin(REVERSE, 50, PERCENT)\n\n\n   wait(0.75, SECONDS)\n\n\n   stopDurAuto()\n\ndef user_control():\n    brain.screen.clear_screen()\n    brain.screen.print(\"driver control\")\n    # Place driver control in this while loop\n\n    while True:\n        clamp_down = True\n        Doinker = False\n        # Get joystick values from the left stick\n        forward = -controller.axis3.position()  # Inverted forward/backward\n        turn = -controller.axis4.position()     # Inverted left/right\n        \n        # Calculate motor speeds\n        left_speed = forward + turn\n        right_speed = forward - turn\n\n        # Set motor speeds for the left side\n        left_motor_1.spin(DirectionType.FORWARD, left_speed, VelocityUnits.PERCENT)\n        left_motor_2.spin(DirectionType.FORWARD, left_speed, VelocityUnits.PERCENT)\n        left_motor_3.spin(DirectionType.FORWARD, left_speed, VelocityUnits.PERCENT)\n\n        # Set motor speeds for the right side\n        right_motor_1.spin(DirectionType.FORWARD, right_speed, VelocityUnits.PERCENT)\n        right_motor_2.spin(DirectionType.FORWARD, right_speed, VelocityUnits.PERCENT)\n        right_motor_3.spin(DirectionType.FORWARD, right_speed, VelocityUnits.PERCENT)\n\n        if(controller.buttonA.pressing()):\n            clamp_down = False\n\n        if(controller.buttonR2.pressing()):\n            intake_spin()\n\n        if(controller.buttonX.pressing()):\n            intake_reverse()\n        if(controller.buttonY.pressing()):\n            intake_stop()\n\n        if(controller.buttonL1.pressing()):\n            lift.set_velocity(100, PERCENT)\n            lift.spin_for(FORWARD, 30, DEGREES, wait=False)\n            lift.set_stopping(HOLD)\n\n        if(controller.buttonR1.pressing()):\n            lift.set_velocity(100, PERCENT)\n            lift.spin_for(REVERSE, 30, DEGREES, wait=False)\n            lift.set_stopping(HOLD)\n\n        clamp.set(clamp_down)\n\n        \n\n        if(controller.buttonUp.pressing()):\n            Stage1.set_velocity(25, PERCENT)\n            x = 0.5\n            pid_control(88, x, 0.01, 0.1)\n            lift.set_stopping(HOLD)\n            \n        if(controller.buttonLeft.pressing()):\n            Stage1.stop()\n            pid_control(195, 0.5, 0.01, 0.1)\n            lift.set_stopping(HOLD)\n\n        if(controller.buttonL2.pressing()):\n            x = 0.5\n            pid_control(69, x, 0.01, 0.1)\n            lift.set_stopping(COAST)\n        \n        if(controller.buttonRight.pressing()):\n            doinker.set(True)\n        elif(controller.buttonDown.pressing()):\n            doinker.set(False)\n\n        # Small delay to avoid CPU overload\n        wait(20, MSEC)\n\n# Create competition instance\ncomp = Competition(user_control, autonomous)\n\n# Actions to do when the program starts\nbrain.screen.clear_screen()\n\n# Create competition instance\ncomp = Competition(user_control, autonomous)\n\n# Actions to do when the program starts\nbrain.screen.clear_screen()","textLanguage":"python","robotConfig":[{"port":[1],"name":"digital_out_a","customName":false,"deviceType":"DigitalOut","deviceClass":"digital_out","setting":{},"triportSourcePort":22},{"port":[8],"name":"rotation_8","customName":false,"deviceType":"Rotation","deviceClass":"rotation","setting":{"reversed":"true"},"triportSourcePort":22},{"port":[15],"name":"distance_15","customName":false,"deviceType":"Distance","deviceClass":"distance","setting":{},"triportSourcePort":22},{"port":[9],"name":"rotation_9","customName":false,"deviceType":"Rotation","deviceClass":"rotation","setting":{"reversed":"false"},"triportSourcePort":22},{"port":[7],"name":"inertial_7","customName":false,"deviceType":"Inertial","deviceClass":"inertial","setting":{},"triportSourcePort":22},{"port":[4],"name":"digital_out_d","customName":false,"deviceType":"DigitalOut","deviceClass":"digital_out","setting":{},"triportSourcePort":22}],"slot":0,"platform":"V5","sdkVersion":"20240802.15.00.00","appVersion":"4.0.5","fileFormat":"2.0.0","targetBrainGen":"First","v5Sounds":[{"name":"game over","url":"static/sounds/mixkit-arcade-retro-game-over-213.wav"}],"v5SoundsEnabled":false}
+#region VEXcode Generated Robot Configuration
+from vex import *
+import urandom
+
+
+# Brain should be defined by default
+brain=Brain()
+
+
+# Robot configuration code
+digital_out_a = DigitalOut(brain.three_wire_port.a)
+rotation_8 = Rotation(Ports.PORT8, True)
+distance_15 = Distance(Ports.PORT15)
+rotation_9 = Rotation(Ports.PORT9, False)
+inertial_7 = Inertial(Ports.PORT7)
+digital_out_d = DigitalOut(brain.three_wire_port.d)
+
+
+
+
+# wait for rotation sensor to fully initialize
+wait(30, MSEC)
+
+
+
+
+# Make random actually random
+def initializeRandomSeed():
+   wait(100, MSEC)
+   random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
+   urandom.seed(int(random))
+    
+# Set random seed
+initializeRandomSeed()
+
+
+
+
+def play_vexcode_sound(sound_name):
+   # Helper to make playing sounds from the V5 in VEXcode easier and
+   # keeps the code cleaner by making it clear what is happening.
+   print("VEXPlaySound:" + sound_name)
+   wait(5, MSEC)
+
+
+# add a small delay to make sure we don't print in the middle of the REPL header
+wait(200, MSEC)
+# clear the console to make sure we don't have the REPL in the console
+print("\033[2J")
+
+
+#endregion VEXcode Generated Robot Configuration
+
+
+#endregion VEXcode Generated Robot Configuration
+# ---------------------------------------------------------------------------- #
+#                                                                              #
+#   Module:       main.py                                                      #
+#   Author:       Aryan                                                        #
+#   Created:      11/21/2024, 12:22:13 PM                                       #
+#   Description:  V5 project                                                   #
+#                                                                              #
+# ---------------------------------------------------------------------------- #
+
+
+# Library imports
+from vex import *
+
+
+brain = Brain()
+
+
+limit_down = Limit(brain.three_wire_port.h)
+
+
+clamp = DigitalOut(brain.three_wire_port.a)
+
+
+belt = Motor(Ports.PORT9, GearSetting.RATIO_18_1, False)
+
+
+Stage1 = Motor(Ports.PORT10, GearSetting.RATIO_18_1, False)
+
+
+lift = Motor(Ports.PORT7, GearSetting.RATIO_36_1, True)
+
+
+rotation_belt = rotation_8.position(TURNS)
+
+
+doinker = DigitalOut(brain.three_wire_port.d)
+
+
+ring_sensor = distance_15.object_distance(MM)
+
+
+#stops belt and intake
+def stopDurAuto():
+   left_motor_1.stop()
+   left_motor_2.stop()
+   left_motor_3.stop()
+   right_motor_1.stop()
+   right_motor_2.stop()
+   right_motor_3.stop()
+
+
+def intake_spin():
+   Stage1.set_velocity(100, PERCENT)
+   Stage1.spin(FORWARD)
+   belt.set_velocity(100, PERCENT)
+   belt.spin(FORWARD)
+def intake_reverse():
+   Stage1.set_velocity(100)
+   Stage1.spin(REVERSE)
+   belt.set_velocity(100)
+   belt.spin(REVERSE)
+def intake_stop():
+   Stage1.stop()
+   belt.stop()
+
+
+
+
+
+
+# Define motors for the drivetrain
+left_motor_1 = Motor(Ports.PORT1, GearSetting.RATIO_36_1, False)  # Adjust port and reversal as needed
+left_motor_2 = Motor(Ports.PORT2, GearSetting.RATIO_36_1, False)
+left_motor_3 = Motor(Ports.PORT3, GearSetting.RATIO_36_1, True)
+
+
+right_motor_1 = Motor(Ports.PORT4, GearSetting.RATIO_36_1, True)  # Adjust port and reversal as needed
+right_motor_2 = Motor(Ports.PORT5, GearSetting.RATIO_36_1, False)
+right_motor_3 = Motor(Ports.PORT6, GearSetting.RATIO_36_1, True)
+
+
+# Define the controller
+controller = Controller(ControllerType.PRIMARY)
+
+
+def pid_control(target_position, kp, ki, kd):
+   error = 0
+   integral = 0
+   derivative = 0
+   last_error = 0
+   tolerance = 2  # Allowable range for the position to be considered "close enough"
+   max_output = 50  # Maximum motor speed (percentage)
+  
+   while True:
+       current_position = rotation_9.position(DEGREES)
+       error = target_position - current_position
+      
+       # Accumulate the integral term if error is small enough
+       if abs(error) < 50:  # Prevent integral windup
+           integral += error
+       else:
+           integral = 0  # Reset integral for large errors
+      
+       derivative = error - last_error
+       output = (kp * error) + (ki * integral) + (kd * derivative)
+      
+       # Clamp output to prevent excessive speed
+       output = max(min(output, max_output), -max_output)
+      
+       # Apply motor velocity and direction
+       if output > 0:
+           lift.set_velocity(output, PERCENT)
+           lift.spin(FORWARD)
+       elif output < 0:
+           lift.set_velocity(abs(output), PERCENT)
+           lift.spin(REVERSE)
+       else:
+           lift.stop()
+      
+       # Stop PID loop when within tolerance
+       if abs(error) <= tolerance:
+           lift.stop()
+           break
+      
+       last_error = error
+       wait(20, MSEC)
+
+
+
+
+def turn_90(direction):
+
+
+   wait(0.5,SECONDS)
+
+
+   if direction == 'left':
+       left_motor_1.spin(REVERSE, 80, PERCENT)
+       left_motor_2.spin(REVERSE, 80, PERCENT)
+       left_motor_3.spin(REVERSE, 80, PERCENT)
+ 
+       right_motor_1.spin(FORWARD, 50, PERCENT)
+       right_motor_2.spin(FORWARD, 50, PERCENT)
+       right_motor_3.spin(FORWARD, 50, PERCENT)
+
+
+
+
+   if direction == 'right':
+       left_motor_1.spin(FORWARD, 50, PERCENT)
+       left_motor_2.spin(FORWARD, 50, PERCENT)
+       left_motor_3.spin(FORWARD, 50, PERCENT)
+ 
+       right_motor_1.spin(REVERSE, 80, PERCENT)
+       right_motor_2.spin(REVERSE, 80, PERCENT)
+       right_motor_3.spin(REVERSE, 80, PERCENT)
+
+
+   wait(0.305, SECONDS)
+
+
+   stopDurAuto()
+
+
+def autonomous():
+  clamp.set(False)
+  brain.screen.clear_screen()
+  brain.screen.print("Autonomous Mode")
+
+
+  # Drive forward for 2 seconds
+  left_motor_1.spin(FORWARD, 50, PERCENT)
+  left_motor_2.spin(FORWARD, 50, PERCENT)
+  left_motor_3.spin(FORWARD, 50, PERCENT)
+   right_motor_1.spin(FORWARD, 50, PERCENT)
+  right_motor_2.spin(FORWARD, 50, PERCENT)
+  right_motor_3.spin(FORWARD, 50, PERCENT)
+   wait(1, SECONDS)  # Wait for 2 seconds while motors run
+   # Stop all motors
+  left_motor_1.stop()
+  left_motor_2.stop()
+  left_motor_3.stop()
+  right_motor_1.stop()
+  right_motor_2.stop()
+  right_motor_3.stop()
+
+
+   # Clamp onto the Mobile Goal
+
+
+  clamp.set(True)
+
+
+
+
+  wait(1, SECONDS)
+  Stage1.set_velocity(100, PERCENT)
+  belt.set_velocity(100, PERCENT)
+  Stage1.spin(FORWARD)
+  belt.spin(FORWARD)
+
+
+
+
+
+
+
+
+  wait(1, SECONDS)
+
+
+   # Turn negative 40 degrees to align to the stack of goals
+  left_motor_1.spin(REVERSE, 80, PERCENT)
+  left_motor_2.spin(REVERSE, 80, PERCENT)
+  left_motor_3.spin(REVERSE, 80, PERCENT)
+ 
+  right_motor_1.spin(FORWARD, 50, PERCENT)
+  right_motor_2.spin(FORWARD, 50, PERCENT)
+  right_motor_3.spin(FORWARD, 50, PERCENT)
+
+
+
+
+  wait(0.2, SECONDS)
+
+
+
+
+  stopDurAuto()
+    # run into the stack to score the bottom ring
+
+
+  left_motor_1.spin(REVERSE, 50, PERCENT)
+  left_motor_2.spin(REVERSE, 50, PERCENT)
+  left_motor_3.spin(REVERSE, 50, PERCENT)
+   right_motor_1.spin(REVERSE, 50, PERCENT)
+  right_motor_2.spin(REVERSE, 50, PERCENT)
+  right_motor_3.spin(REVERSE, 50, PERCENT)
+
+
+
+
+  wait(0.75, SECONDS)
+
+
+
+
+  stopDurAuto()
+
+
+ 
+  turn_90('left')
+
+
+
+
+  # Operate the clamp (open or close)
+
+
+ 
+    # Example: Close the clamp
+    # Wait for 1 second
+
+
+
+
+  left_motor_1.spin(REVERSE, 25, PERCENT)
+  left_motor_2.spin(REVERSE, 25, PERCENT)
+  left_motor_3.spin(REVERSE, 25, PERCENT)
+   right_motor_1.spin(REVERSE, 25, PERCENT)
+  right_motor_2.spin(REVERSE, 25, PERCENT)
+  right_motor_3.spin(REVERSE, 25, PERCENT)
+   wait(1, SECONDS)  # Wait for 2 seconds while motors run
+   # Stop all motors
+  left_motor_1.stop()
+  left_motor_2.stop()
+  left_motor_3.stop()
+  right_motor_1.stop()
+  right_motor_2.stop()
+  right_motor_3.stop()
+ 
+
+
+  left_motor_1.spin(FORWARD, 50, PERCENT)
+  left_motor_2.spin(FORWARD, 50, PERCENT)
+  left_motor_3.spin(FORWARD, 50, PERCENT)
+   right_motor_1.spin(FORWARD, 50, PERCENT)
+  right_motor_2.spin(FORWARD, 50, PERCENT)
+  right_motor_3.spin(FORWARD, 50, PERCENT)
+   wait(0.4, SECONDS)  # Wait for 2 seconds while motors run
+
+
+  stopDurAuto()
+
+
+  left_motor_1.spin(REVERSE, 50, PERCENT)
+  left_motor_2.spin(REVERSE, 50, PERCENT)
+  left_motor_3.spin(REVERSE, 50, PERCENT)
+   right_motor_1.spin(FORWARD, 80, PERCENT)
+  right_motor_2.spin(FORWARD, 80, PERCENT)
+  right_motor_3.spin(FORWARD, 80, PERCENT)
+   wait(0.2, SECONDS)  # Wait for 2 seconds while motors run
+  
+  stopDurAuto()
+
+
+
+
+  left_motor_1.spin(REVERSE, 50, PERCENT)
+  left_motor_2.spin(REVERSE, 50, PERCENT)
+  left_motor_3.spin(REVERSE, 50, PERCENT)
+   right_motor_1.spin(REVERSE, 50, PERCENT)
+  right_motor_2.spin(REVERSE, 50, PERCENT)
+  right_motor_3.spin(REVERSE, 50, PERCENT)
+
+
+
+
+  wait(0.75, SECONDS)
+
+
+
+
+  stopDurAuto()
+
+
+def user_control():
+   brain.screen.clear_screen()
+   brain.screen.print("driver control")
+   # Place driver control in this while loop
+
+
+   while True:
+       clamp_down = True
+       Doinker = False
+       # Get joystick values from the left stick
+       forward = -controller.axis3.position()  # Inverted forward/backward
+       turn = -controller.axis4.position()     # Inverted left/right
+      
+       # Calculate motor speeds
+       left_speed = forward + turn
+       right_speed = forward - turn
+
+
+       # Set motor speeds for the left side
+       left_motor_1.spin(DirectionType.FORWARD, left_speed, VelocityUnits.PERCENT)
+       left_motor_2.spin(DirectionType.FORWARD, left_speed, VelocityUnits.PERCENT)
+       left_motor_3.spin(DirectionType.FORWARD, left_speed, VelocityUnits.PERCENT)
+
+
+       # Set motor speeds for the right side
+       right_motor_1.spin(DirectionType.FORWARD, right_speed, VelocityUnits.PERCENT)
+       right_motor_2.spin(DirectionType.FORWARD, right_speed, VelocityUnits.PERCENT)
+       right_motor_3.spin(DirectionType.FORWARD, right_speed, VelocityUnits.PERCENT)
+
+
+       if(controller.buttonA.pressing()):
+           clamp_down = False
+
+
+       if(controller.buttonR2.pressing()):
+           intake_spin()
+
+
+       if(controller.buttonX.pressing()):
+           intake_reverse()
+       if(controller.buttonY.pressing()):
+           intake_stop()
+
+
+       if(controller.buttonL1.pressing()):
+           lift.set_velocity(100, PERCENT)
+           lift.spin_for(FORWARD, 30, DEGREES, wait=False)
+           lift.set_stopping(HOLD)
+
+
+       if(controller.buttonR1.pressing()):
+           lift.set_velocity(100, PERCENT)
+           lift.spin_for(REVERSE, 30, DEGREES, wait=False)
+           lift.set_stopping(HOLD)
+
+
+       clamp.set(clamp_down)
+
+
+      
+
+
+       if(controller.buttonUp.pressing()):
+           Stage1.set_velocity(25, PERCENT)
+           x = 0.5
+           pid_control(88, x, 0.01, 0.1)
+           lift.set_stopping(HOLD)
+          
+       if(controller.buttonLeft.pressing()):
+           Stage1.stop()
+           pid_control(195, 0.5, 0.01, 0.1)
+           lift.set_stopping(HOLD)
+
+
+       if(controller.buttonL2.pressing()):
+           x = 0.5
+           pid_control(69, x, 0.01, 0.1)
+           lift.set_stopping(COAST)
+      
+       if(controller.buttonRight.pressing()):
+           doinker.set(True)
+       elif(controller.buttonDown.pressing()):
+           doinker.set(False)
+
+
+       # Small delay to avoid CPU overload
+       wait(20, MSEC)
+
+
+# Create competition instance
+comp = Competition(user_control, autonomous)
+
+
+# Actions to do when the program starts
+brain.screen.clear_screen()
+
+
+# Create competition instance
+comp = Competition(user_control, autonomous)
+
+
+# Actions to do when the program starts
+brain.screen.clear_screen()
+
+
+
