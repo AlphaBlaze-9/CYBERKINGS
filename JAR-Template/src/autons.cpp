@@ -1,5 +1,41 @@
 #include "vex.h"
 
+void stopDurAuto() {
+    left_motor_1.stop();
+    left_motor_2.stop();
+    left_motor_3.stop();
+    right_motor_1.stop();
+    right_motor_2.stop();
+    right_motor_3.stop();
+}
+
+
+void turn90(std::string direction) {
+    wait(0.5, seconds);
+
+    if (direction == "left") {
+        left_motor_1.spin(reverse, 80, percent);
+        left_motor_2.spin(reverse, 80, percent);
+        left_motor_3.spin(reverse, 80, percent);
+
+        right_motor_1.spin(forward, 50, percent);
+        right_motor_2.spin(forward, 50, percent);
+        right_motor_3.spin(forward, 50, percent);
+    }
+    else if (direction == "right") {
+        left_motor_1.spin(forward, 50, percent);
+        left_motor_2.spin(forward, 50, percent);
+        left_motor_3.spin(forward, 50, percent);
+
+        right_motor_1.spin(reverse, 80, percent);
+        right_motor_2.spin(reverse, 80, percent);
+        right_motor_3.spin(reverse, 80, percent);
+    }
+    
+    wait(0.305, seconds);
+    stopDurAuto();
+}
+
 /**
  * Resets the constants for auton movement.
  * Modify these to change the default behavior of functions like
@@ -7,6 +43,10 @@
  * drive, heading, turning, and swinging, as well as the PID and
  * exit conditions, check the docs.
  */
+
+
+
+
 
 void default_constants(){
   // Each constant set is in the form of (maxVoltage, kP, kI, kD, startI).
@@ -126,4 +166,392 @@ void holonomic_odom_test(){
   chassis.holonomic_drive_to_pose(18, 0, 180);
   chassis.holonomic_drive_to_pose(0, 18, 270);
   chassis.holonomic_drive_to_pose(0, 0, 0);
+}
+
+/**
+ * Autonomous routine for Blue Left corner.
+ */
+void BlueLeft() {
+  clamp.set(false);
+  Brain.Screen.clearScreen();
+  Brain.Screen.print("Autonomous Mode");
+
+  // Drive forward
+  left_motor_1.spin(forward, 50, percent);
+  left_motor_2.spin(forward, 50, percent);
+  left_motor_3.spin(forward, 50, percent);
+  right_motor_1.spin(forward, 50, percent);
+  right_motor_2.spin(forward, 50, percent);
+  right_motor_3.spin(forward, 50, percent);
+  wait(1, seconds);
+
+  // Stop all motors
+  left_motor_1.stop();
+  left_motor_2.stop();
+  left_motor_3.stop();
+  right_motor_1.stop();
+  right_motor_2.stop();
+  right_motor_3.stop();
+
+  // Clamp onto the Mobile Goal
+  clamp.set(true);
+  wait(1, seconds);
+
+  Stage1.setVelocity(100, percent);
+  belt.setVelocity(100, percent);
+  Stage1.spin(forward);
+  belt.spin(forward);
+  wait(1, seconds);
+
+  // Turn -40 degrees
+  left_motor_1.spin(forward, 80, percent);
+  left_motor_2.spin(forward, 80, percent);
+  left_motor_3.spin(forward, 80, percent);
+  right_motor_1.spin(reverse, 50, percent);
+  right_motor_2.spin(reverse, 50, percent);
+  right_motor_3.spin(reverse, 50, percent);
+  wait(0.2, seconds);
+
+  stopDurAuto();
+  left_motor_1.spin(reverse, 50, percent);
+  left_motor_2.spin(reverse, 50, percent);
+  left_motor_3.spin(reverse, 50, percent);
+  right_motor_1.spin(reverse, 50, percent);
+  right_motor_2.spin(reverse, 50, percent);
+  right_motor_3.spin(reverse, 50, percent);
+  wait(0.75, seconds);
+
+  turn_90("left");
+  stopDurAuto();
+
+  left_motor_1.spin(reverse, 50, percent);
+  left_motor_2.spin(reverse, 50, percent);
+  left_motor_3.spin(reverse, 50, percent);
+  right_motor_1.spin(reverse, 50, percent);
+  right_motor_2.spin(reverse, 50, percent);
+  right_motor_3.spin(reverse, 50, percent);
+  turn_90("right");
+}
+
+
+void BlueRight() {
+    clamp.set(false);
+    Brain.Screen.clearScreen();
+    Brain.Screen.print("Autonomous Mode");
+
+    // Drive forward for 1 second
+    left_motor_1.spin(forward, 50, percent);
+    left_motor_2.spin(forward, 50, percent);
+    left_motor_3.spin(forward, 50, percent);
+    right_motor_1.spin(forward, 50, percent);
+    right_motor_2.spin(forward, 50, percent);
+    right_motor_3.spin(forward, 50, percent);
+    wait(1, seconds);
+
+    // Stop all motors
+    left_motor_1.stop();
+    left_motor_2.stop();
+    left_motor_3.stop();
+    right_motor_1.stop();
+    right_motor_2.stop();
+    right_motor_3.stop();
+
+    // Clamp onto the Mobile Goal
+    clamp.set(true);
+    wait(1, seconds);
+
+    Stage1.setVelocity(100, percent);
+    belt.setVelocity(100, percent);
+    Stage1.spin(forward);
+    belt.spin(forward);
+    wait(1, seconds);
+
+    // Turn -40 degrees
+    left_motor_1.spin(forward, 80, percent);
+    left_motor_2.spin(forward, 80, percent);
+    left_motor_3.spin(forward, 80, percent);
+    right_motor_1.spin(reverse, 50, percent);
+    right_motor_2.spin(reverse, 50, percent);
+    right_motor_3.spin(reverse, 50, percent);
+    wait(0.2, seconds);
+
+    stopDurAuto();
+
+    // Run into the stack to score the bottom ring
+    left_motor_1.spin(reverse, 50, percent);
+    left_motor_2.spin(reverse, 50, percent);
+    left_motor_3.spin(reverse, 50, percent);
+    right_motor_1.spin(reverse, 50, percent);
+    right_motor_2.spin(reverse, 50, percent);
+    right_motor_3.spin(reverse, 50, percent);
+    wait(0.75, seconds);
+
+    stopDurAuto();
+    turn_90("right");
+
+    // Move backward slightly
+    left_motor_1.spin(reverse, 25, percent);
+    left_motor_2.spin(reverse, 25, percent);
+    left_motor_3.spin(reverse, 25, percent);
+    right_motor_1.spin(reverse, 25, percent);
+    right_motor_2.spin(reverse, 25, percent);
+    right_motor_3.spin(reverse, 25, percent);
+    wait(1, seconds);
+
+    // Stop all motors
+    left_motor_1.stop();
+    left_motor_2.stop();
+    left_motor_3.stop();
+    right_motor_1.stop();
+    right_motor_2.stop();
+    right_motor_3.stop();
+
+    // Move forward slightly
+    left_motor_1.spin(forward, 50, percent);
+    left_motor_2.spin(forward, 50, percent);
+    left_motor_3.spin(forward, 50, percent);
+    right_motor_1.spin(forward, 50, percent);
+    right_motor_2.spin(forward, 50, percent);
+    right_motor_3.spin(forward, 50, percent);
+    wait(0.4, seconds);
+
+    stopDurAuto();
+
+    // Turn
+    left_motor_1.spin(forward, 50, percent);
+    left_motor_2.spin(forward, 50, percent);
+    left_motor_3.spin(forward, 50, percent);
+    right_motor_1.spin(reverse, 80, percent);
+    right_motor_2.spin(reverse, 80, percent);
+    right_motor_3.spin(reverse, 80, percent);
+    wait(0.4, seconds);
+
+    stopDurAuto();
+
+    // Move backward slightly
+    left_motor_1.spin(reverse, 50, percent);
+    left_motor_2.spin(reverse, 50, percent);
+    left_motor_3.spin(reverse, 50, percent);
+    right_motor_1.spin(reverse, 50, percent);
+    right_motor_2.spin(reverse, 50, percent);
+    right_motor_3.spin(reverse, 50, percent);
+    wait(0.4, seconds);
+
+    stopDurAuto();
+}
+
+
+
+
+void RedLeft() {
+    lift.spinFor(forward, 0.5, turns, false);
+    clamp.set(false);
+    Brain.Screen.clearScreen();
+    Brain.Screen.print("Autonomous Mode");
+
+    // Drive forward
+    left_motor_1.spin(forward, 50, percent);
+    left_motor_2.spin(forward, 50, percent);
+    left_motor_3.spin(forward, 50, percent);
+    right_motor_1.spin(forward, 50, percent);
+    right_motor_2.spin(forward, 50, percent);
+    right_motor_3.spin(forward, 50, percent);
+    wait(1, seconds);
+
+    // Stop all motors
+    left_motor_1.stop();
+    left_motor_2.stop();
+    left_motor_3.stop();
+    right_motor_1.stop();
+    right_motor_2.stop();
+    right_motor_3.stop();
+
+    // Clamp onto the Mobile Goal
+    clamp.set(true);
+    wait(1, seconds);
+
+    Stage1.setVelocity(100, percent);
+    belt.setVelocity(100, percent);
+    Stage1.spin(forward);
+    belt.spin(forward);
+    wait(1, seconds);
+
+    // Turn -40 degrees
+    left_motor_1.spin(reverse, 80, percent);
+    left_motor_2.spin(reverse, 80, percent);
+    left_motor_3.spin(reverse, 80, percent);
+    right_motor_1.spin(forward, 50, percent);
+    right_motor_2.spin(forward, 50, percent);
+    right_motor_3.spin(forward, 50, percent);
+    wait(0.2, seconds);
+
+    stopDurAuto();
+
+    // Run into the stack
+    left_motor_1.spin(reverse, 50, percent);
+    left_motor_2.spin(reverse, 50, percent);
+    left_motor_3.spin(reverse, 50, percent);
+    right_motor_1.spin(reverse, 50, percent);
+    right_motor_2.spin(reverse, 50, percent);
+    right_motor_3.spin(reverse, 50, percent);
+    wait(0.75, seconds);
+    stopDurAuto();
+
+    turn_90("left");
+
+    // Reverse slightly
+    left_motor_1.spin(reverse, 25, percent);
+    left_motor_2.spin(reverse, 25, percent);
+    left_motor_3.spin(reverse, 25, percent);
+    right_motor_1.spin(reverse, 25, percent);
+    right_motor_2.spin(reverse, 25, percent);
+    right_motor_3.spin(reverse, 25, percent);
+    wait(1, seconds);
+
+    // Stop all motors
+    left_motor_1.stop();
+    left_motor_2.stop();
+    left_motor_3.stop();
+    right_motor_1.stop();
+    right_motor_2.stop();
+    right_motor_3.stop();
+
+    // Move forward
+    left_motor_1.spin(forward, 50, percent);
+    left_motor_2.spin(forward, 50, percent);
+    left_motor_3.spin(forward, 50, percent);
+    right_motor_1.spin(forward, 50, percent);
+    right_motor_2.spin(forward, 50, percent);
+    right_motor_3.spin(forward, 50, percent);
+    wait(0.4, seconds);
+    stopDurAuto();
+
+    // Slight turn
+    left_motor_1.spin(reverse, 50, percent);
+    left_motor_2.spin(reverse, 50, percent);
+    left_motor_3.spin(reverse, 50, percent);
+    right_motor_1.spin(forward, 80, percent);
+    right_motor_2.spin(forward, 80, percent);
+    right_motor_3.spin(forward, 80, percent);
+    wait(0.35, seconds);
+    stopDurAuto();
+
+    // Reverse
+    left_motor_1.spin(reverse, 50, percent);
+    left_motor_2.spin(reverse, 50, percent);
+    left_motor_3.spin(reverse, 50, percent);
+    right_motor_1.spin(reverse, 50, percent);
+    right_motor_2.spin(reverse, 50, percent);
+    right_motor_3.spin(reverse, 50, percent);
+    wait(0.9, seconds);
+    stopDurAuto();
+}
+
+
+
+
+
+
+void RedRight() {
+  clamp.set(false);
+  Brain.Screen.clearScreen();
+  Brain.Screen.print("Autonomous Mode");
+
+  // Drive forward for 2 seconds
+  left_motor_1.spin(forward, 50, percent);
+  left_motor_2.spin(forward, 50, percent);
+  left_motor_3.spin(forward, 50, percent);
+  right_motor_1.spin(forward, 50, percent);
+  right_motor_2.spin(forward, 50, percent);
+  right_motor_3.spin(forward, 50, percent);
+  wait(1, seconds);
+
+  // Stop all motors
+  left_motor_1.stop();
+  left_motor_2.stop();
+  left_motor_3.stop();
+  right_motor_1.stop();
+  right_motor_2.stop();
+  right_motor_3.stop();
+
+  // Clamp onto the Mobile Goal
+  clamp.set(true);
+  wait(1, seconds);
+
+  Stage1.setVelocity(100, percent);
+  belt.setVelocity(100, percent);
+  Stage1.spin(forward);
+  belt.spin(forward);
+  wait(1, seconds);
+
+  // Turn negative 40 degrees
+  left_motor_1.spin(reverse, 80, percent);
+  left_motor_2.spin(reverse, 80, percent);
+  left_motor_3.spin(reverse, 80, percent);
+  right_motor_1.spin(forward, 50, percent);
+  right_motor_2.spin(forward, 50, percent);
+  right_motor_3.spin(forward, 50, percent);
+  wait(0.2, seconds);
+
+  stopDurAuto();
+
+  // Run into the stack to score the bottom ring
+  left_motor_1.spin(reverse, 50, percent);
+  left_motor_2.spin(reverse, 50, percent);
+  left_motor_3.spin(reverse, 50, percent);
+  right_motor_1.spin(reverse, 50, percent);
+  right_motor_2.spin(reverse, 50, percent);
+  right_motor_3.spin(reverse, 50, percent);
+  wait(0.75, seconds);
+
+  stopDurAuto();
+
+  turn_90("left");
+
+  // Operate the clamp (close)
+  left_motor_1.spin(reverse, 25, percent);
+  left_motor_2.spin(reverse, 25, percent);
+  left_motor_3.spin(reverse, 25, percent);
+  right_motor_1.spin(reverse, 25, percent);
+  right_motor_2.spin(reverse, 25, percent);
+  right_motor_3.spin(reverse, 25, percent);
+  wait(1, seconds);
+
+  // Stop all motors
+  left_motor_1.stop();
+  left_motor_2.stop();
+  left_motor_3.stop();
+  right_motor_1.stop();
+  right_motor_2.stop();
+  right_motor_3.stop();
+
+  left_motor_1.spin(forward, 50, percent);
+  left_motor_2.spin(forward, 50, percent);
+  left_motor_3.spin(forward, 50, percent);
+  right_motor_1.spin(forward, 50, percent);
+  right_motor_2.spin(forward, 50, percent);
+  right_motor_3.spin(forward, 50, percent);
+  wait(0.4, seconds);
+
+  stopDurAuto();
+
+  left_motor_1.spin(reverse, 50, percent);
+  left_motor_2.spin(reverse, 50, percent);
+  left_motor_3.spin(reverse, 50, percent);
+  right_motor_1.spin(forward, 80, percent);
+  right_motor_2.spin(forward, 80, percent);
+  right_motor_3.spin(forward, 80, percent);
+  wait(0.2, seconds);
+
+  stopDurAuto();
+
+  left_motor_1.spin(reverse, 50, percent);
+  left_motor_2.spin(reverse, 50, percent);
+  left_motor_3.spin(reverse, 50, percent);
+  right_motor_1.spin(reverse, 50, percent);
+  right_motor_2.spin(reverse, 50, percent);
+  right_motor_3.spin(reverse, 50, percent);
+  wait(0.75, seconds);
+
+  stopDurAuto();
 }
