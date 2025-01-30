@@ -115,90 +115,59 @@ bool auto_started = false;
  * be more descriptive, if you like.
  */
 
+int auton_selection = 0; // 0: Blue Right, 1: Blue Left, 2: Red Right, 3: Red Left
+
 void pre_auton() {
-  // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
   default_constants();
 
-  while(!auto_started){
+  while (!auto_started) {
     Brain.Screen.clearScreen();
-    Brain.Screen.printAt(5, 20, "JAR Template v1.2.0");
-    Brain.Screen.printAt(5, 40, "Battery Percentage:");
-    Brain.Screen.printAt(5, 60, "%d", Brain.Battery.capacity());
-    Brain.Screen.printAt(5, 80, "Chassis Heading Reading:");
-    Brain.Screen.printAt(5, 100, "%f", chassis.get_absolute_heading());
-    Brain.Screen.printAt(5, 120, "Selected Auton:");
-    switch(current_auton_selection){
+    Brain.Screen.printAt(5, 20, "Select Autonomous");
+    
+    switch (auton_selection) {
       case 0:
-        Brain.Screen.printAt(5, 140, "Auton 1");
+        Brain.Screen.printAt(5, 40, "Current: Blue Right");
         break;
       case 1:
-        Brain.Screen.printAt(5, 140, "Auton 2");
+        Brain.Screen.printAt(5, 40, "Current: Blue Left");
         break;
       case 2:
-        Brain.Screen.printAt(5, 140, "Auton 3");
+        Brain.Screen.printAt(5, 40, "Current: Red Right");
         break;
       case 3:
-        Brain.Screen.printAt(5, 140, "Auton 4");
-        break;
-      case 4:
-        Brain.Screen.printAt(5, 140, "Auton 5");
-        break;
-      case 5:
-        Brain.Screen.printAt(5, 140, "Auton 6");
-        break;
-      case 6:
-        Brain.Screen.printAt(5, 140, "Auton 7");
-        break;
-      case 7:
-        Brain.Screen.printAt(5, 140, "Auton 8");
+        Brain.Screen.printAt(5, 40, "Current: Red Left");
         break;
     }
-    if(Brain.Screen.pressing()){
-      while(Brain.Screen.pressing()) {}
-      current_auton_selection ++;
-    } else if (current_auton_selection == 8){
-      current_auton_selection = 0;
+
+    Brain.Screen.printAt(5, 60, "Tap screen to cycle");
+
+    if (Brain.Screen.pressing()) {
+      while (Brain.Screen.pressing()) {} // Wait until release
+      auton_selection = (auton_selection + 1) % 4; // Cycle between 0-3
     }
-    task::sleep(10);
+
+    task::sleep(100);
   }
 }
 
-/**
- * Auton function, which runs the selected auton. Case 0 is the default,
- * and will run in the brain screen goes untouched during preauton. Replace
- * drive_test(), for example, with your own auton function you created in
- * autons.cpp and declared in autons.h.
- */
-
-void autonomous(void) {
+void autonomous() {
   auto_started = true;
-  switch(current_auton_selection){ 
+
+  switch (auton_selection) {
     case 0:
-      drive_test();
+      blue_right_auton(); 
       break;
-    case 1:         
-      drive_test();
+    case 1:
+      blue_left_auton();
       break;
     case 2:
-      turn_test();
+      red_right_auton();
       break;
     case 3:
-      swing_test();
+      red_left_auton();
       break;
-    case 4:
-      full_test();
-      break;
-    case 5:
-      odom_test();
-      break;
-    case 6:
-      tank_odom_test();
-      break;
-    case 7:
-      holonomic_odom_test();
-      break;
- }
+  }
 }
 
 /*---------------------------------------------------------------------------*/
